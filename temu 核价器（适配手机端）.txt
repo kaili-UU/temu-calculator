@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Temu商品核价计算器（响应式版）</title>
+    <style>
+        /* 基础重置与字体 */
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 16px;
+            background-color: #ff9933; /* 橙色背景 */
+            color: #000;
+            line-height: 1.4;
+        }
+
+        h2 {
+            text-align: center;
+            color: #000;
+            margin-bottom: 8px;
+            font-size: 24px;
+        }
+
+        .description {
+            text-align: center;
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 24px;
+            font-style: italic;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            background-color: #ffffff;
+            padding: 16px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: bold;
+            color: #000;
+            font-size: 16px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px; /* 防止iOS缩放 */
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            border-color: #ff6600;
+            outline: none;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: #ff6600;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #e55a00;
+        }
+
+        .result {
+            margin-top: 24px;
+            padding: 16px;
+            background-color: #ffffff;
+            border: 2px solid #ff6600;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #d9534f;
+            text-align: center;
+        }
+
+        .note {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #333;
+            line-height: 1.5;
+            background-color: #ffffff;
+            padding: 12px;
+            border-radius: 6px;
+        }
+
+        /* 响应式：手机端优化 */
+        @media (max-width: 600px) {
+            body {
+                padding: 12px;
+            }
+
+            h2 {
+                font-size: 22px;
+            }
+
+            .description {
+                font-size: 13px;
+                margin-bottom: 20px;
+            }
+
+            .input-group {
+                padding: 14px;
+                margin-bottom: 18px;
+            }
+
+            label {
+                font-size: 15px;
+                margin-bottom: 5px;
+            }
+
+            input {
+                padding: 11px;
+                font-size: 16px; /* 防止iOS自动缩放 */
+            }
+
+            button {
+                padding: 13px;
+                font-size: 16px;
+            }
+
+            .result {
+                font-size: 17px;
+                padding: 14px;
+                margin-top: 20px;
+            }
+
+            .note {
+                font-size: 13px;
+                padding: 11px;
+                margin-top: 16px;
+            }
+        }
+
+        /* 超小屏（如旧手机）进一步优化 */
+        @media (max-width: 400px) {
+            body {
+                padding: 8px;
+            }
+
+            .input-group {
+                padding: 12px;
+            }
+
+            input, button {
+                padding: 10px;
+            }
+
+            .result {
+                padding: 12px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h2>🔢 Temu商品核价计算器</h2>
+    <div class="description">
+        基于官方公式：建议销售价 = (供货价 + 物流费 + 平台扣点) ÷ (1 - 平台抽佣比例)
+    </div>
+
+    <div class="input-group">
+        <label for="supplyPrice">供货价（元）：</label>
+        <input type="number" id="supplyPrice" step="0.01" placeholder="例：10" required>
+    </div>
+
+    <div class="input-group">
+        <label for="logisticsCost">物流费（元）：</label>
+        <input type="number" id="logisticsCost" step="0.01" placeholder="例：0 或 6 或留空" />
+    </div>
+
+    <div class="input-group">
+        <label for="platformFee">平台扣点（元）：</label>
+        <input type="number" id="platformFee" step="0.01" placeholder="例：0 或 2 或留空" />
+    </div>
+
+    <div class="input-group">
+        <label for="commissionRate">平台抽佣比例（如20表示20%，默认20）：</label>
+        <input type="number" id="commissionRate" step="0.1" value="20" placeholder="例：20" />
+    </div>
+
+    <div class="input-group">
+        <label for="minPrice">最低售价限制（元，可选）：</label>
+        <input type="number" id="minPrice" step="0.01" placeholder="例：15（留空则不限制）" />
+    </div>
+
+    <button onclick="calculateSellingPrice()">💰 计算建议售价</button>
+
+    <div class="result" id="result"></div>
+
+    <div class="note">
+        <strong>使用提示：</strong><br>
+        • 支持物流费/平台扣点填写 0，也可留空（自动为 0）<br>
+        • 抽佣比例如 20 表示 20%，必填项<br>
+        • 若设置了最低售价且计算结果更低，将自动显示最低价<br>
+        • 适配手机、平板，界面清晰易用
+    </div>
+
+    <script>
+        function calculateSellingPrice() {
+            const supplyPrice = parseFloat(document.getElementById('supplyPrice').value);
+            const logisticsCost = parseFloat(document.getElementById('logisticsCost').value) || 0;
+            const platformFee = parseFloat(document.getElementById('platformFee').value) || 0;
+            const commissionRatePercent = parseFloat(document.getElementById('commissionRate').value) || 20;
+            const minPriceInput = document.getElementById('minPrice').value;
+
+            if (isNaN(supplyPrice) || supplyPrice < 0) {
+                document.getElementById('result').innerText = '❌ 请输入有效的供货价';
+                return;
+            }
+
+            const commissionRate = commissionRatePercent / 100;
+
+            if (commissionRate < 0 || commissionRate >= 1) {
+                document.getElementById('result').innerText = '❌ 抽佣比例应在 0% ~ 100% 之间';
+                return;
+            }
+
+            const totalCost = supplyPrice + logisticsCost + platformFee;
+            const denominator = 1 - commissionRate;
+
+            if (denominator <= 0) {
+                document.getElementById('result').innerText = '❌ 抽佣比例过高，无法计算';
+                return;
+            }
+
+            const suggestedPrice = totalCost / denominator;
+
+            let finalPrice = suggestedPrice;
+
+            if (minPriceInput && !isNaN(parseFloat(minPriceInput)) && parseFloat(minPriceInput) > 0) {
+                const minPrice = parseFloat(minPriceInput);
+                if (suggestedPrice < minPrice) {
+                    finalPrice = minPrice;
+                    document.getElementById('result').innerHTML =
+                        `⚠️ 计算建议价 ¥${suggestedPrice.toFixed(2)} 低于最低售价 ¥${minPrice.toFixed(2)}，<br>已自动调整为最低售价：<span style="color: #d9534f; font-size: 20px;">¥${finalPrice.toFixed(2)}</span>`;
+                    return;
+                }
+            }
+
+            document.getElementById('result').innerHTML =
+                `✅ 建议销售价：<span style="color: #d9534f; font-size: 20px;">¥${finalPrice.toFixed(2)}</span>`;
+        }
+    </script>
+</body>
+</html>
